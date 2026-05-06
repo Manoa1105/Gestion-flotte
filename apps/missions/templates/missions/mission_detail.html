@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    #carte-mission { height: 500px; border-radius: 0.5rem; z-index: 0; }
+    .marker-camion { font-size: 28px; line-height: 1; text-align: center; }
+</style>
+{% endblock %}
+
+{% block contenu %}
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <nav class="text-sm text-slate-500 mb-2">
+                <a href="{% url 'missions:mission_liste' %}" class="hover:text-primaire-700">Missions</a>
+                <span class="mx-2">/</span>
+                <span class="text-slate-700">{{ mission.reference }}</span>
+            </nav>
+            <h1 class="text-2xl font-bold text-slate-900">{{ mission.reference }}</h1>
+            <p class="mt-1 text-sm text-slate-600">
+                {{ mission.ville_depart.nom }} &rarr; {{ mission.ville_arrivee.nom }}
+                {% if mission.distance_totale_km %} &middot; {{ mission.distance_totale_km }} km{% endif %}
+            </p>
+        </div>
+        <div class="flex space-x-2">
+            {% if mission.statut == 'planifiee' %}
+                <form method="post" action="{% url 'missions:mission_demarrer' pk=mission.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-primaire">Démarrer la mission</button>
+                </form>
+                <a href="{% url 'missions:mission_modifier' pk=mission.pk %}" class="btn-secondaire">Modifier</a>
+            {% elif mission.statut == 'en_cours' %}
+                <form method="post" action="{% url 'missions:mission_terminer' pk=mission.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-primaire">Terminer (succès)</button>
+                </form>
+                <form method="post" action="{% url 'missions:mission_echouer' pk=mission.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">Marquer en échec</button>
+                </form>
+            {% endif %}
+
+            {% if mission.statut == 'planifiee' or mission.statut == 'en_cours' %}
+                <form method="post" action="{% url 'missions:mission_annuler' pk=mission.pk %}" class="inline" onsubmit="return confirm('Annuler cette mission ?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-secondaire">Annuler</button>
+                </form>
+            {% endif %}
+
+            {% if mission.statut == 'planifiee' or mission.statut == 'annulee' %}
+                <a href="{% url 'missions:mission_supprimer' pk=mission.pk %}" class="btn-danger">Supprimer</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-3 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border border-amber-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="carte mb-6 {% if mission.statut == 'en_cours' %}bg-blue-50 border-blue-200{% endif %}">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-semibold {% if mission.statut == 'en_cours' %}text-blue-900{% else %}text-slate-900{% endif %}">
+                Suivi du trajet
+            </h2>
+            {% if mission.statut == 'en_cours' %}
+                <span class="text-xs text-blue-700 flex items-center">
+                    <span class="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
+                    En direct
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden mb-2">
+            <div id="barre-progression"
+                 class="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                 style="width: {{ mission.progression_pourcent }}%"></div>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+            <span id="texte-distance-parcourue">{{ mission.distance_parcourue_km|floatformat:1 }}</span> km
+            / {{ mission.distance_totale_km }} km
+            (<span id="texte-pourcent">{{ mission.progression_pourcent }}</span>%)
+        </p>
+
+        <div id="carte-mission"
+             data-statut="{{ mission.statut }}"
+             data-url-data="{% url 'missions:mission_carte_data' pk=mission.pk %}"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Trajet</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Départ</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.ville_depart.nom }} ({{ mission.ville_depart.region.code }})</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Arrivée</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.ville_arrivee.nom }} ({{ mission.ville_arrivee.region.code }})</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Distance prévue</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.distance_totale_km|default:"—" }} km</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Distance parcourue</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.distance_parcourue_km|default:0 }} km</dd>
+                    </div>
+                </dl>
+
+                {% if trajet and trajet.troncons %}
+                    <div class="mt-4">
+                        <h3 class="text-sm font-medium text-slate-700 mb-2">Itinéraire ({{ trajet.troncons|length }} tronçon{{ trajet.troncons|length|pluralize }})</h3>
+                        <ol class="space-y-1 text-sm text-slate-700">
+                            {% for t in trajet.troncons %}
+                                <li>
+                                    <span class="text-slate-400">{{ forloop.counter }}.</span>
+                                    {{ t.route.numero }} : {{ t.ville_depart.nom }} &rarr; {{ t.ville_arrivee.nom }}
+                                    <span class="text-slate-500">({{ t.distance_km }} km, ~{{ t.duree_typique_minutes }} min, état {{ t.get_etat_route_display|lower }})</span>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if evenements %}
+                <div class="carte">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4">
+                        Événements survenus ({{ evenements|length }})
+                    </h2>
+                    <ul class="space-y-3">
+                        {% for ev in evenements %}
+                            <li class="flex items-start space-x-3 p-3 rounded-md
+                                {% if ev.fait_echouer_mission %}bg-red-50 border border-red-200{% else %}bg-slate-50{% endif %}">
+                                <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full
+                                    {% if ev.type_evenement.gravite == 'critique' %}bg-red-600
+                                    {% elif ev.type_evenement.gravite == 'grave' %}bg-orange-500
+                                    {% elif ev.type_evenement.gravite == 'moderee' %}bg-amber-400
+                                    {% else %}bg-slate-400{% endif %}"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-slate-900">{{ ev.type_evenement.libelle }}</p>
+                                        <span class="text-xs text-slate-500">{{ ev.timestamp|date:"d/m H:i" }}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 mt-1">{{ ev.description }}</p>
+                                    <div class="mt-1 flex items-center space-x-3 text-xs text-slate-500">
+                                        <span>Durée : {{ ev.duree_minutes }} min</span>
+                                        {% if ev.cout_mga %}
+                                            <span>Coût : {{ ev.cout_mga|floatformat:0 }} Ar</span>
+                                        {% endif %}
+                                        {% if ev.fait_echouer_mission %}
+                                            <span class="text-red-700 font-medium">A fait échouer la mission</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if depenses %}
+                <div class="carte">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4">
+                        Dépenses générées ({{ depenses|length }})
+                    </h2>
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead>
+                            <tr>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Description</th>
+                                <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for d in depenses %}
+                                <tr>
+                                    <td class="px-2 py-2 text-sm text-slate-700">{{ d.date|date:"d/m H:i" }}</td>
+                                    <td class="px-2 py-2 text-sm text-slate-900">{{ d.type_depense.libelle }}</td>
+                                    <td class="px-2 py-2 text-sm text-slate-600">{{ d.description|truncatechars:50 }}</td>
+                                    <td class="px-2 py-2 text-sm text-right font-medium text-slate-900">{{ d.montant_mga|floatformat:0 }} Ar</td>
+                                </tr>
+                            {% endfor %}
+                                       <tr class="bg-slate-50 font-semibold">
+                                <td colspan="3" class="px-2 py-2 text-sm text-right text-slate-700">Total</td>
+                                <td class="px-2 py-2 text-sm text-right text-slate-900">{{ total_depenses|floatformat:0 }} Ar</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Cargaison</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Categorie</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.get_categorie_cargaison_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Poids</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.poids_cargaison_tonnes }} tonnes</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Aspect financier</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Client</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.nom_client|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Prix facture</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ mission.prix_facture_mga|floatformat:0 }} Ar</dd>
+                    </div>
+                    {% if depenses %}
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Total depenses</dt>
+                        <dd class="mt-1 text-sm text-red-700">- {{ total_depenses|floatformat:0 }} Ar</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Marge</dt>
+                        <dd class="mt-1 text-sm font-semibold {% if rentabilite > 0 %}text-green-700{% else %}text-red-700{% endif %}">
+                            {{ rentabilite|floatformat:0 }} Ar
+                        </dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+        </div>
+
+        <div class="space-y-6">
+            <div class="carte">
+                <h2 class="text-sm font-medium text-slate-600 mb-2">Statut actuel</h2>
+                {% if mission.statut == 'planifiee' %}
+                    <span class="badge-orange text-sm px-3 py-1">Planifiee</span>
+                {% elif mission.statut == 'en_cours' %}
+                    <span class="badge-bleu text-sm px-3 py-1">En cours</span>
+                {% elif mission.statut == 'terminee' %}
+                    <span class="badge-vert text-sm px-3 py-1">Terminee</span>
+                {% elif mission.statut == 'echouee' %}
+                    <span class="badge-rouge text-sm px-3 py-1">Echouee</span>
+                {% elif mission.statut == 'annulee' %}
+                    <span class="badge-gris text-sm px-3 py-1">Annulee</span>
+                {% endif %}
+            </div>
+
+            <div class="carte">
+                <h2 class="text-sm font-medium text-slate-600 mb-3">Camion</h2>
+                <p class="text-sm font-medium text-slate-900">
+                    <a href="{% url 'flotte:camion_detail' pk=mission.camion.pk %}" class="hover:text-primaire-700">
+                        {{ mission.camion.immatriculation }}
+                    </a>
+                </p>
+            </div>
+
+            <div class="carte">
+                <h2 class="text-sm font-medium text-slate-600 mb-3">Chauffeur</h2>
+                <p class="text-sm font-medium text-slate-900">
+                    <a href="{% url 'flotte:chauffeur_detail' pk=mission.chauffeur.pk %}" class="hover:text-primaire-700">
+                        {{ mission.chauffeur.nom_complet }}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var conteneur = document.getElementById("carte-mission");
+    if (!conteneur) return;
+    var urlData = conteneur.dataset.urlData;
+    var enCours = conteneur.dataset.statut === "en_cours";
+
+    var carte = L.map("carte-mission").setView([-19.0, 47.0], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap'
+    }).addTo(carte);
+
+    var coucheVilles = L.layerGroup().addTo(carte);
+    var lignePrevue = null, ligneParcourue = null, marqueurCamion = null;
+    var coucheEvenements = L.layerGroup().addTo(carte);
+    var dejaCadree = false;
+
+    var iconeCamion = L.divIcon({
+        html: '<div class="marker-camion">&#128666;</div>',
+        className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+    });
+
+    var couleursEv = { mineure: "#94a3b8", moderee: "#f59e0b", grave: "#ea580c", critique: "#dc2626" };
+
+    function rafraichir() {
+        fetch(urlData).then(function(r) { return r.json(); }).then(function(data) {
+            coucheVilles.clearLayers();
+            data.villes.forEach(function(v) {
+                var c = "#64748b";
+                if (v.type === "depart") c = "#16a34a";
+                if (v.type === "arrivee") c = "#dc2626";
+                L.circleMarker([v.lat, v.lon], {
+                    radius: v.type === "etape" ? 5 : 8,
+                    color: c, fillColor: c, fillOpacity: 0.8, weight: 2
+                }).bindPopup("<b>" + v.nom + "</b><br>" + v.type).addTo(coucheVilles);
+            });
+
+            if (lignePrevue) carte.removeLayer(lignePrevue);
+            if (data.polyline_planifiee.length > 1) {
+                lignePrevue = L.polyline(data.polyline_planifiee, {
+                    color: "#94a3b8", weight: 3, dashArray: "8, 8", opacity: 0.6
+                }).addTo(carte);
+            }
+
+            if (ligneParcourue) carte.removeLayer(ligneParcourue);
+            if (data.trace_gps.length > 1) {
+                ligneParcourue = L.polyline(data.trace_gps, {
+                    color: "#2563eb", weight: 4, opacity: 0.85
+                }).addTo(carte);
+            }
+
+            if (data.position_camion) {
+                var ll = [data.position_camion.lat, data.position_camion.lon];
+                if (marqueurCamion) marqueurCamion.setLatLng(ll);
+                else marqueurCamion = L.marker(ll, { icon: iconeCamion }).addTo(carte);
+                marqueurCamion.bindPopup(
+                    "<b>" + data.mission.reference + "</b><br>" +
+                    Math.round(data.position_camion.vitesse_kmh) + " km/h<br>" +
+                    data.mission.distance_parcourue_km.toFixed(1) + " / " +
+                    data.mission.distance_totale_km + " km"
+                );
+            }
+
+            coucheEvenements.clearLayers();
+            data.evenements.forEach(function(ev) {
+                var c = couleursEv[ev.gravite] || "#64748b";
+                L.circleMarker([ev.lat, ev.lon], {
+                    radius: 6, color: "#fff", weight: 2,
+                    fillColor: c, fillOpacity: 0.9
+                }).bindPopup(
+                    "<b>" + ev.libelle + "</b><br>Duree : " + ev.duree_minutes + " min"
+                ).addTo(coucheEvenements);
+            });
+
+            document.getElementById("barre-progression").style.width = data.mission.progression_pourcent + "%";
+            document.getElementById("texte-distance-parcourue").textContent = data.mission.distance_parcourue_km.toFixed(1);
+            document.getElementById("texte-pourcent").textContent = data.mission.progression_pourcent;
+
+            if (!dejaCadree && data.polyline_planifiee.length > 1) {
+                carte.fitBounds(L.latLngBounds(data.polyline_planifiee).pad(0.1));
+                dejaCadree = true;
+            }
+
+            if (data.mission.statut !== "en_cours" && window._sim) {
+                clearInterval(window._sim);
+                window._sim = null;
+                setTimeout(function() { location.reload(); }, 1500);
+            }
+        }).catch(function(err) { console.error("Erreur carte:", err); });
+    }
+
+    rafraichir();
+    if (enCours) window._sim = setInterval(rafraichir, 3000);
+})();
+</script>
+{% endblock %}

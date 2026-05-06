@@ -1,0 +1,93 @@
+# =============================================================================
+# .gitignore - Fichiers et dossiers à NE PAS versionner avec Git
+# =============================================================================
+# Pourquoi ce fichier ?
+# Git suit tous les fichiers du projet par défaut. Mais certains fichiers
+# ne doivent JAMAIS être partagés (mots de passe, fichiers temporaires,
+# environnements virtuels qui pèsent des centaines de Mo, etc.).
+# Ce fichier dit à Git : "ignore ces fichiers, ne les ajoute pas au dépôt".
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Python : fichiers compilés et caches
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# -----------------------------------------------------------------------------
+# Environnement virtuel Python
+# Le venv contient une copie de Python + toutes les librairies installées.
+# Il pèse très lourd et chaque développeur recrée le sien sur sa machine.
+# -----------------------------------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+
+# -----------------------------------------------------------------------------
+# Variables d'environnement (SECRETS !)
+# Le fichier .env contient les mots de passe, clés API, etc.
+# Il ne doit JAMAIS être versionné. On versionne uniquement .env.example.
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+
+# -----------------------------------------------------------------------------
+# Django : fichiers générés automatiquement
+# -----------------------------------------------------------------------------
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Migrations : on les versionne, mais pas les fichiers temporaires
+**/migrations/__pycache__/
+
+# -----------------------------------------------------------------------------
+# Fichiers statiques collectés (générés par "collectstatic" en production)
+# -----------------------------------------------------------------------------
+staticfiles/
+/static_root/
+
+# -----------------------------------------------------------------------------
+# IDE et éditeurs (VS Code, PyCharm, etc.)
+# Chaque dev a sa config personnelle, on ne la partage pas.
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# -----------------------------------------------------------------------------
+# Système d'exploitation
+# -----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------------------------------------------
+# Tailwind CSS : fichiers générés (on versionne les sources, pas le résultat)
+# -----------------------------------------------------------------------------
+node_modules/
+static/css/dist/
+
+# -----------------------------------------------------------------------------
+# Tests et couverture de code
+# -----------------------------------------------------------------------------
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# -----------------------------------------------------------------------------
+# Données OSRM (extract OSM Madagascar + fichiers générés, ~250 Mo)
+# Téléchargeables/regénérables à tout moment via Geofabrik et Docker.
+# -----------------------------------------------------------------------------
+docker/osrm/data/*.osm.pbf
+docker/osrm/data/*.osrm
+docker/osrm/data/*.osrm.*

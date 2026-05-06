@@ -1,0 +1,5 @@
+# Dossier des fichiers statiques globaux : CSS, JavaScript, images, polices.
+# On y mettra par exemple :
+#   static/css/      -> fichiers CSS (dont la sortie compilée de Tailwind)
+#   static/js/       -> fichiers JavaScript (HTMX, Leaflet, etc.)
+#   static/img/      -> images du site (logo, illustrations)

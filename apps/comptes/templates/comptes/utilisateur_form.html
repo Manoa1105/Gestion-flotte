@@ -1,0 +1,113 @@
+{% comment %}
+Formulaire de création / modification d'un utilisateur.
+La variable "mode" vaut "creation" ou "modification".
+{% endcomment %}
+{% extends "base.html" %}
+
+{% block contenu %}
+<div class="max-w-2xl mx-auto">
+
+    {% comment %} En-tête avec breadcrumb {% endcomment %}
+    <div class="flex items-center gap-2 text-sm text-slate-500 mb-6">
+        <a href="{% url 'comptes:utilisateur_liste' %}" class="hover:text-primaire-600">Utilisateurs</a>
+        <span>/</span>
+        <span class="text-slate-900 font-medium">
+            {% if mode == "creation" %}Nouvel utilisateur{% else %}Modifier {{ utilisateur.username }}{% endif %}
+        </span>
+    </div>
+
+    <div class="carte">
+        <h1 class="text-lg font-semibold text-slate-900 mb-6">{{ titre_page }}</h1>
+
+        {% comment %} Messages d'erreur non liés à un champ {% endcomment %}
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                {% for erreur in form.non_field_errors %}
+                    <p class="text-sm text-red-700">{{ erreur }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% comment %} Identité {% endcomment %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="form-label" for="{{ form.prenom.id_for_label }}">{{ form.prenom.label }}</label>
+                    {{ form.prenom }}
+                    {% if form.prenom.errors %}<p class="form-help text-red-600 mt-1">{{ form.prenom.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.nom.id_for_label }}">{{ form.nom.label }}</label>
+                    {{ form.nom }}
+                    {% if form.nom.errors %}<p class="form-help text-red-600 mt-1">{{ form.nom.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<p class="form-help text-red-600 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+            </div>
+
+            {% comment %} Champs spécifiques à la création {% endcomment %}
+            {% if mode == "creation" %}
+            <div class="mb-4">
+                <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}<p class="form-help text-red-600 mt-1">{{ form.username.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="form-label" for="{{ form.mot_de_passe.id_for_label }}">{{ form.mot_de_passe.label }}</label>
+                    {{ form.mot_de_passe }}
+                    {% if form.mot_de_passe.errors %}<p class="form-help text-red-600 mt-1">{{ form.mot_de_passe.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.mot_de_passe_confirmation.id_for_label }}">{{ form.mot_de_passe_confirmation.label }}</label>
+                    {{ form.mot_de_passe_confirmation }}
+                    {% if form.mot_de_passe_confirmation.errors %}<p class="form-help text-red-600 mt-1">{{ form.mot_de_passe_confirmation.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% comment %} Rôle et lien chauffeur {% endcomment %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                    {{ form.role }}
+                    {% if form.role.errors %}<p class="form-help text-red-600 mt-1">{{ form.role.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.chauffeur_lie.id_for_label }}">{{ form.chauffeur_lie.label }}</label>
+                    {{ form.chauffeur_lie }}
+                    <p class="form-help">Uniquement si rôle = Chauffeur</p>
+                </div>
+            </div>
+
+            {% comment %} Statut actif (modification uniquement) {% endcomment %}
+            {% if mode == "modification" %}
+            <div class="mb-6 flex items-center gap-3">
+                {{ form.actif }}
+                <label class="text-sm font-medium text-slate-700" for="{{ form.actif.id_for_label }}">
+                    {{ form.actif.label }}
+                </label>
+            </div>
+            {% endif %}
+
+            {% comment %} Boutons d'action {% endcomment %}
+            <div class="flex items-center gap-3 pt-4 border-t border-slate-200">
+                <button type="submit" class="btn-primaire">
+                    {% if mode == "creation" %}Créer l'utilisateur{% else %}Enregistrer{% endif %}
+                </button>
+                <a href="{% url 'comptes:utilisateur_liste' %}"
+                   class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

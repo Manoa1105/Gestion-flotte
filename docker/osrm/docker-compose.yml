@@ -1,0 +1,75 @@
+# =============================================================================
+# docker-compose.yml - Serveur OSRM local pour Madagascar
+# =============================================================================
+# Auto-detecte n'importe quel fichier .osm.pbf place dans ./data/
+# (par exemple madagascar-latest.osm.pbf ou madagascar-260504.osm.pbf).
+#
+# Usage :
+#   docker compose --profile prepare run --rm osrm-prepare   (1 fois)
+#   docker compose up -d osrm                                 (en continu)
+# =============================================================================
+
+services:
+  # ----- Pre-traitement (a lancer une fois apres avoir telecharge le pbf) -----
+  osrm-prepare:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: gestion-flotte-osrm-prepare
+    volumes:
+      - ./data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        PBF_FILE=$$(ls /data/*.osm.pbf 2>/dev/null | head -1)
+        if [ -z "$$PBF_FILE" ]; then
+          echo "ERREUR : aucun fichier .osm.pbf trouve dans /data/"
+          echo ""
+          echo "Telecharge-le depuis Geofabrik :"
+          echo "  https://download.geofabrik.de/africa/madagascar.html"
+          echo ""
+          echo "Place-le dans ./data/ puis relance la commande."
+          exit 1
+        fi
+        BASE=$$(basename "$$PBF_FILE" .osm.pbf)
+        echo "Fichier OSM detecte : $$PBF_FILE"
+        echo "Nom de base        : $$BASE"
+        echo ""
+        if [ -f "/data/$${BASE}.osrm.mldgr" ]; then
+          echo "Donnees deja preparees pour ce fichier, rien a faire."
+          echo "(Pour tout refaire, supprime /data/$${BASE}.osrm*)"
+          exit 0
+        fi
+        echo "[1/3] Extraction du graphe routier (peut durer 1-3 min)..."
+        osrm-extract -p /opt/car.lua "$$PBF_FILE"
+        echo ""
+        echo "[2/3] Partitionnement (Multi-Level Dijkstra)..."
+        osrm-partition "/data/$${BASE}.osrm"
+        echo ""
+        echo "[3/3] Customization..."
+        osrm-customize "/data/$${BASE}.osrm"
+        echo ""
+        echo "Pre-traitement termine. Tu peux maintenant lancer :"
+        echo "  docker compose up -d osrm"
+    profiles:
+      - prepare
+
+  # ----- Service de routage (a laisser tourner) -----
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: gestion-flotte-osrm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        BASE=$$(ls /data/*.osrm.mldgr 2>/dev/null | head -1 | xargs -I {} basename {} .osrm.mldgr)
+        if [ -z "$$BASE" ]; then
+          echo "ERREUR : aucun fichier .osrm.mldgr trouve dans /data/"
+          echo "Lance d'abord : docker compose --profile prepare run --rm osrm-prepare"
+          exit 1
+        fi
+        echo "Demarrage OSRM avec /data/$${BASE}.osrm"
+        exec osrm-routed --algorithm mld --max-matching-size 5000 --max-viaroute-size 5000 "/data/$${BASE}.osrm"
+    restart: unless-stopped

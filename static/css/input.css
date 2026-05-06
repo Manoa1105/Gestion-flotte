@@ -1,0 +1,111 @@
+/* =========================================================================
+   input.css - Fichier source pour Tailwind
+   =========================================================================
+   C'est le fichier d'entrée que Tailwind va traiter.
+   Il sera transformé en static/css/dist/output.css (le vrai CSS chargé par
+   les templates HTML).
+
+   On édite ce fichier pour ajouter du CSS personnalisé.
+   On ne touche JAMAIS au fichier output.css (il est généré).
+   ========================================================================= */
+
+/* Directives Tailwind : injectent les classes utilitaires */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* =========================================================================
+   STYLES PERSONNALISÉS
+   =========================================================================
+   On peut définir nos propres composants réutilisables avec @apply.
+   Ils sont disponibles comme classes CSS dans nos templates.
+   ========================================================================= */
+
+@layer components {
+
+    /* -----------------------------------------------------------------------
+       Boutons
+       ----------------------------------------------------------------------- */
+    .btn {
+        @apply inline-flex items-center justify-center px-4 py-2 rounded-md
+               font-medium text-sm transition-colors duration-150
+               focus:outline-none focus:ring-2 focus:ring-offset-2;
+    }
+
+    .btn-primaire {
+        @apply btn bg-primaire-600 text-white hover:bg-primaire-700
+               focus:ring-primaire-500;
+    }
+
+    .btn-secondaire {
+        @apply btn bg-white text-slate-700 border border-slate-300
+               hover:bg-slate-50 focus:ring-primaire-500;
+    }
+
+    .btn-danger {
+        @apply btn bg-red-600 text-white hover:bg-red-700
+               focus:ring-red-500;
+    }
+
+    /* -----------------------------------------------------------------------
+       Cartes (cards) du tableau de bord
+       ----------------------------------------------------------------------- */
+    .carte {
+        @apply bg-white rounded-lg shadow-sm border border-slate-200 p-6;
+    }
+
+    /* -----------------------------------------------------------------------
+       Badges de statut
+       ----------------------------------------------------------------------- */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+               text-xs font-medium;
+    }
+
+    .badge-vert      { @apply badge bg-green-100  text-green-800;  }
+    .badge-bleu      { @apply badge bg-blue-100   text-blue-800;   }
+    .badge-orange    { @apply badge bg-orange-100 text-orange-800; }
+    .badge-rouge     { @apply badge bg-red-100    text-red-800;    }
+    .badge-gris      { @apply badge bg-slate-100  text-slate-800;  }
+
+    /* -----------------------------------------------------------------------
+       Formulaires
+       ----------------------------------------------------------------------- */
+    .form-input,
+    .form-select,
+    .form-textarea {
+        @apply block w-full rounded-md border-slate-300 text-slate-900
+               placeholder-slate-400 shadow-sm
+               focus:border-primaire-500 focus:ring focus:ring-primaire-200
+               focus:ring-opacity-50 sm:text-sm;
+    }
+
+    .form-label {
+        @apply block text-sm font-medium text-slate-700 mb-1;
+    }
+
+    .form-help {
+        @apply mt-1 text-xs text-slate-500;
+    }
+
+    .form-error {
+        @apply mt-1 text-xs text-red-600;
+    }
+
+    /* -----------------------------------------------------------------------
+       Chips de filtre (HTMX)
+       ----------------------------------------------------------------------- */
+    .chip {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+               border cursor-pointer transition-colors duration-150;
+    }
+
+    .chip-inactive {
+        @apply chip bg-white text-slate-700 border-slate-300 hover:bg-slate-50;
+    }
+
+    .chip-active {
+        @apply chip bg-primaire-600 text-white border-primaire-600;
+    }
+}

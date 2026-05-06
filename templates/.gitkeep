@@ -1,0 +1,2 @@
+# Dossier des templates HTML globaux du projet (base.html, 404.html, etc.).
+# Les templates spécifiques à chaque app iront dans apps/NOM/templates/NOM/.

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <nav class="text-sm text-slate-500 mb-2">
+                <a href="{% url 'flotte:chauffeur_liste' %}" class="hover:text-primaire-700">Chauffeurs</a>
+                <span class="mx-2">/</span>
+                <span class="text-slate-700">{{ chauffeur.nom_complet }}</span>
+            </nav>
+            <h1 class="text-2xl font-bold text-slate-900">{{ chauffeur.nom_complet }}</h1>
+            <p class="mt-1 text-sm text-slate-600">
+                Permis {{ chauffeur.get_type_permis_display }} ·
+                {{ chauffeur.annees_experience }} an{{ chauffeur.annees_experience|pluralize }} d'expérience
+            </p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'flotte:chauffeur_modifier' pk=chauffeur.pk %}" class="btn-secondaire">Modifier</a>
+            <a href="{% url 'flotte:chauffeur_supprimer' pk=chauffeur.pk %}" class="btn-danger">Supprimer</a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-3 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Identité</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Nom complet</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.nom_complet }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Date de naissance</dt>
+                        <dd class="mt-1 text-sm text-slate-900">
+                            {% if chauffeur.date_naissance %}{{ chauffeur.date_naissance|date:"d F Y" }}{% else %}—{% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Téléphone</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.telephone|default:"—" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Email</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.email|default:"—" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Permis et expérience</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Numéro de permis</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.numero_permis }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Catégorie</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.get_type_permis_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Années d'expérience</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.annees_experience }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Contrat</h2>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Date d'embauche</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.date_embauche|date:"d F Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 uppercase">Salaire mensuel</dt>
+                        <dd class="mt-1 text-sm text-slate-900">{{ chauffeur.salaire_mensuel_mga|floatformat:0 }} Ar</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="carte">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Dernières missions</h2>
+                {% if missions %}
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead>
+                            <tr>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Réf.</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Trajet</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Camion</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for m in missions %}
+                                <tr>
+                                    <td class="px-2 py-2 text-sm text-slate-900">{{ m.reference }}</td>
+                                    <td class="px-2 py-2 text-sm text-slate-700">{{ m.ville_depart.nom }} → {{ m.ville_arrivee.nom }}</td>
+                                    <td class="px-2 py-2 text-sm text-slate-700">{{ m.camion.immatriculation }}</td>
+                                    <td class="px-2 py-2 text-sm">{{ m.get_statut_display }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-sm text-slate-500">Ce chauffeur n'a pas encore été assigné à une mission.</p>
+                {% endif %}
+            </div>
+
+            {% if chauffeur.notes %}
+                <div class="carte">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-2">Notes</h2>
+                    <p class="text-sm text-slate-700 whitespace-pre-line">{{ chauffeur.notes }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-6">
+            <div class="carte">
+                <h2 class="text-sm font-medium text-slate-600 mb-2">Statut actuel</h2>
+                {% if chauffeur.statut == 'disponible' %}
+                    <span class="badge-vert text-sm px-3 py-1">Disponible</span>
+                {% elif chauffeur.statut == 'en_mission' %}
+                    <span class="badge-bleu text-sm px-3 py-1">En mission</span>
+                {% elif chauffeur.statut == 'repos' %}
+                    <span class="badge-orange text-sm px-3 py-1">En repos</span>
+                {% elif chauffeur.statut == 'conge' %}
+                    <span class="badge-orange text-sm px-3 py-1">En congé</span>
+                {% elif chauffeur.statut == 'inactif' %}
+                    <span class="badge-gris text-sm px-3 py-1">Inactif</span>
+                {% else %}
+                    <span class="badge-gris text-sm px-3 py-1">{{ chauffeur.get_statut_display }}</span>
+                {% endif %}
+            </div>
+
+            <div class="carte text-xs text-slate-500 space-y-1">
+                <p>Créé le {{ chauffeur.cree_le|date:"d/m/Y H:i" }}</p>
+                <p>Modifié le {{ chauffeur.modifie_le|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

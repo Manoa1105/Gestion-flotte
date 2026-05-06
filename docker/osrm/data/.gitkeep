@@ -1,0 +1,5 @@
+# Ce dossier va contenir :
+#   - madagascar-latest.osm.pbf       (extract OSM, telecharge depuis Geofabrik, ~50 Mo)
+#   - madagascar-latest.osrm.*        (fichiers generes par osrm-extract/partition/customize, ~200 Mo)
+#
+# Ces fichiers sont gitignored, voir le .gitignore racine du projet.

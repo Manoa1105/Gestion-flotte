@@ -1,0 +1,40 @@
+# =============================================================================
+# requirements.txt - Liste des bibliothèques Python nécessaires au projet
+# =============================================================================
+# Comment ça marche ?
+# Cette liste est lue par pip (gestionnaire de paquets Python) pour installer
+# automatiquement tout ce dont le projet a besoin.
+#
+# Commande d'installation (à exécuter dans le venv activé) :
+#   pip install -r requirements.txt
+#
+# Notation des versions :
+#   ==X.Y.Z    -> version EXACTE
+#   >=X.Y      -> minimum X.Y, accepte plus récent
+#   >=X,<Y     -> entre X (inclus) et Y (exclu) - plus sûr en production
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Django : le framework web principal
+# Version 5.x : la plus récente avec support long terme prévu
+# -----------------------------------------------------------------------------
+Django>=5.0,<6.0
+
+# -----------------------------------------------------------------------------
+# python-dotenv : pour charger les variables du fichier .env
+# Permet de séparer la config (clés secrètes, mots de passe) du code source
+# -----------------------------------------------------------------------------
+python-dotenv>=1.0,<2.0
+
+# -----------------------------------------------------------------------------
+# psycopg : pilote PostgreSQL pour Python (version 3, la plus récente)
+# Le suffixe [binary] inclut une version pré-compilée, pas besoin de compilateur C
+# Pas utilisé tant qu'on est sur SQLite, mais on l'installe dès maintenant
+# -----------------------------------------------------------------------------
+psycopg[binary]>=3.1,<4.0
+
+# -----------------------------------------------------------------------------
+# Pillow : manipulation d'images (logo, photos de camions, etc.)
+# Requis par Django pour les ImageField des modèles
+# -----------------------------------------------------------------------------
+Pillow>=10.0,<12.0

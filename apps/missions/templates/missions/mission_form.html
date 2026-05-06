@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+
+    <div class="mb-6">
+        <nav class="text-sm text-slate-500 mb-2">
+            <a href="{% url 'missions:mission_liste' %}" class="hover:text-primaire-700">Missions</a>
+            <span class="mx-2">/</span>
+            {% if mode == "modification" %}
+                <a href="{% url 'missions:mission_detail' pk=mission.pk %}" class="hover:text-primaire-700">{{ mission.reference }}</a>
+                <span class="mx-2">/</span>
+                <span class="text-slate-700">Modifier</span>
+            {% else %}
+                <span class="text-slate-700">Nouvelle mission</span>
+            {% endif %}
+        </nav>
+        <h1 class="text-2xl font-bold text-slate-900">
+            {% if mode == "modification" %}Modifier {{ mission.reference }}{% else %}Nouvelle mission{% endif %}
+        </h1>
+        {% if mode != "modification" %}
+            <p class="mt-1 text-sm text-slate-600">
+                La distance et la date d'arrivee prevues seront calculees automatiquement
+                a partir des troncons de routes nationales.
+            </p>
+        {% endif %}
+    </div>
+
+    <form method="post" class="carte">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-3 rounded-md bg-red-50 text-red-800 border border-red-200">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="space-y-6">
+
+            <div>
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Ressources assignees</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.camion.id_for_label }}">{{ form.camion.label }}</label>
+                        {{ form.camion }}
+                        {% if form.camion.errors %}<p class="form-error">{{ form.camion.errors|join:" " }}</p>{% endif %}
+                        <p class="form-help">Seuls les camions disponibles sont proposes.</p>
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.chauffeur.id_for_label }}">{{ form.chauffeur.label }}</label>
+                        {{ form.chauffeur }}
+                        {% if form.chauffeur.errors %}<p class="form-error">{{ form.chauffeur.errors|join:" " }}</p>{% endif %}
+                        <p class="form-help">Seuls les chauffeurs disponibles sont proposes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Trajet</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.ville_depart.id_for_label }}">{{ form.ville_depart.label }}</label>
+                        {{ form.ville_depart }}
+                        {% if form.ville_depart.errors %}<p class="form-error">{{ form.ville_depart.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.ville_arrivee.id_for_label }}">{{ form.ville_arrivee.label }}</label>
+                        {{ form.ville_arrivee }}
+                        {% if form.ville_arrivee.errors %}<p class="form-error">{{ form.ville_arrivee.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Cargaison</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.categorie_cargaison.id_for_label }}">{{ form.categorie_cargaison.label }}</label>
+                        {{ form.categorie_cargaison }}
+                        {% if form.categorie_cargaison.errors %}<p class="form-error">{{ form.categorie_cargaison.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.poids_cargaison_tonnes.id_for_label }}">{{ form.poids_cargaison_tonnes.label }}</label>
+                        {{ form.poids_cargaison_tonnes }}
+                        {% if form.poids_cargaison_tonnes.errors %}<p class="form-error">{{ form.poids_cargaison_tonnes.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="form-label" for="{{ form.description_cargaison.id_for_label }}">{{ form.description_cargaison.label }}</label>
+                        {{ form.description_cargaison }}
+                        {% if form.description_cargaison.errors %}<p class="form-error">{{ form.description_cargaison.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Client et facturation</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.nom_client.id_for_label }}">{{ form.nom_client.label }}</label>
+                        {{ form.nom_client }}
+                        {% if form.nom_client.errors %}<p class="form-error">{{ form.nom_client.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.prix_facture_mga.id_for_label }}">{{ form.prix_facture_mga.label }}</label>
+                        {{ form.prix_facture_mga }}
+                        {% if form.prix_facture_mga.errors %}<p class="form-error">{{ form.prix_facture_mga.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Planning</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.date_depart_prevue.id_for_label }}">{{ form.date_depart_prevue.label }}</label>
+                        {{ form.date_depart_prevue }}
+                        {% if form.date_depart_prevue.errors %}<p class="form-error">{{ form.date_depart_prevue.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <label class="form-label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}<p class="form-error">{{ form.notes.errors|join:" " }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-slate-200 flex items-center justify-end space-x-3">
+            <a href="{% if mode == 'modification' %}{% url 'missions:mission_detail' pk=mission.pk %}{% else %}{% url 'missions:mission_liste' %}{% endif %}" class="btn-secondaire">Annuler</a>
+            <button type="submit" class="btn-primaire">
+                {% if mode == "modification" %}Enregistrer les modifications{% else %}Creer la mission{% endif %}
+            </button>
+        </div>
+    </form>
+
+{% endblock %}

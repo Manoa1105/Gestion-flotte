@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+
+    <div class="max-w-2xl mx-auto">
+        <nav class="text-sm text-slate-500 mb-2">
+            <a href="{% url 'finances:dashboard' %}" class="hover:text-primaire-700">Finances</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'finances:depense_liste' %}" class="hover:text-primaire-700">Depenses</a>
+            <span class="mx-2">/</span>
+            <span class="text-slate-700">Supprimer</span>
+        </nav>
+
+        <div class="carte border-red-200">
+            <h1 class="text-lg font-semibold text-slate-900 mb-2">Confirmer la suppression</h1>
+            <p class="text-sm text-slate-700">
+                Supprimer la depense <strong>{{ depense.type_depense.libelle }}</strong> du
+                {{ depense.date|date:"d/m/Y" }} ({{ depense.montant_mga|floatformat:0 }} Ar) ?
+                {% if depense.automatique %}
+                    <br><span class="text-amber-700">Attention : depense generee automatiquement par la simulation.</span>
+                {% endif %}
+            </p>
+            <form method="post" class="mt-6 flex items-center justify-end space-x-3">
+                {% csrf_token %}
+                <a href="{% url 'finances:depense_liste' %}" class="btn-secondaire">Annuler</a>
+                <button type="submit" class="btn-danger">Supprimer</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

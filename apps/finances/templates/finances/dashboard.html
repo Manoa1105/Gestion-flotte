@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block contenu %}
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Tableau de bord financier</h1>
+            <p class="mt-1 text-sm text-slate-600">
+                Periode : {{ kpis.date_debut|date:"d/m/Y" }} au {{ kpis.date_fin|date:"d/m/Y" }}
+            </p>
+        </div>
+        <a href="{% url 'finances:depense_liste' %}" class="btn-secondaire">Voir toutes les depenses</a>
+    </div>
+
+    {% comment %} KPIs principaux {% endcomment %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="carte">
+            <p class="text-sm font-medium text-slate-600">Chiffre d'affaires</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">{{ kpis.ca_total|floatformat:0 }} Ar</p>
+            <p class="text-xs text-slate-500 mt-1">{{ kpis.nb_missions_terminees }} mission{{ kpis.nb_missions_terminees|pluralize }} terminee{{ kpis.nb_missions_terminees|pluralize }}</p>
+        </div>
+        <div class="carte">
+            <p class="text-sm font-medium text-slate-600">Depenses</p>
+            <p class="mt-2 text-2xl font-bold text-red-700">{{ kpis.depenses_total|floatformat:0 }} Ar</p>
+            <p class="text-xs text-slate-500 mt-1">Toutes categories</p>
+        </div>
+        <div class="carte">
+            <p class="text-sm font-medium text-slate-600">Marge nette</p>
+            <p class="mt-2 text-2xl font-bold {% if kpis.marge > 0 %}text-green-700{% else %}text-red-700{% endif %}">
+                {{ kpis.marge|floatformat:0 }} Ar
+            </p>
+            <p class="text-xs text-slate-500 mt-1">{{ kpis.marge_pourcent }}% du CA</p>
+        </div>
+        <div class="carte">
+            <p class="text-sm font-medium text-slate-600">Missions</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">{{ kpis.nb_missions }}</p>
+            <p class="text-xs text-slate-500 mt-1">
+                {{ kpis.nb_missions_terminees }} OK / {{ kpis.nb_missions_echouees }} echec
+            </p>
+        </div>
+    </div>
+
+    {% comment %} Graphiques {% endcomment %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="carte">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Revenus vs depenses (6 derniers mois)</h2>
+            <canvas id="chart-mensuel" height="200"></canvas>
+        </div>
+        <div class="carte">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Repartition des depenses</h2>
+            <canvas id="chart-categories" height="200"></canvas>
+        </div>
+    </div>
+
+    {% comment %} Rentabilite par camion {% endcomment %}
+    <div class="carte">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Rentabilite par camion</h2>
+        {% if rentabilite %}
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead>
+                    <tr>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase">Camion</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">Missions</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">CA</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">Depenses</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">Marge</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase">%</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for r in rentabilite %}
+                        <tr>
+                            <td class="px-2 py-2 text-sm font-medium text-slate-900">
+                                <a href="{% url 'flotte:camion_detail' pk=r.camion.pk %}" class="hover:text-primaire-700">
+                                    {{ r.camion.immatriculation }}
+                                </a>
+                                <span class="text-xs text-slate-500 ml-2">{{ r.camion.marque }} {{ r.camion.modele }}</span>
+                            </td>
+                            <td class="px-2 py-2 text-sm text-right text-slate-700">{{ r.nb_missions }}</td>
+                            <td class="px-2 py-2 text-sm text-right text-slate-900">{{ r.revenus|floatformat:0 }} Ar</td>
+                            <td class="px-2 py-2 text-sm text-right text-red-700">- {{ r.depenses|floatformat:0 }} Ar</td>
+                            <td class="px-2 py-2 text-sm text-right font-semibold {% if r.marge > 0 %}text-green-700{% else %}text-red-700{% endif %}">
+                                {{ r.marge|floatformat:0 }} Ar
+                            </td>
+                            <td class="px-2 py-2 text-sm text-right text-slate-700">{{ r.marge_pourcent|floatformat:0 }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-sm text-slate-500 text-center py-8">
+                Aucune activite a afficher pour cette periode.
+                Cree des missions et lance le simulateur pour generer des donnees.
+            </p>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var dataMensuel = {{ chart_mensuel_json|safe }};
+    var dataCategories = {{ chart_categories_json|safe }};
+
+    var ctxMensuel = document.getElementById("chart-mensuel");
+    if (ctxMensuel) {
+        new Chart(ctxMensuel, {
+            type: "bar",
+            data: {
+                labels: dataMensuel.labels,
+                datasets: [
+                    {
+                        label: "Revenus",
+                        data: dataMensuel.revenus,
+                        backgroundColor: "rgba(22, 163, 74, 0.7)",
+                        borderColor: "rgba(22, 163, 74, 1)",
+                        borderWidth: 1,
+                    },
+                    {
+                        label: "Depenses",
+                        data: dataMensuel.depenses,
+                        backgroundColor: "rgba(220, 38, 38, 0.7)",
+                        borderColor: "rgba(220, 38, 38, 1)",
+                        borderWidth: 1,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    var ctxCat = document.getElementById("chart-categories");
+    if (ctxCat && dataCategories.labels.length > 0) {
+        new Chart(ctxCat, {
+            type: "doughnut",
+            data: {
+                labels: dataCategories.labels,
+                datasets: [{
+                    data: dataCategories.data,
+                    backgroundColor: [
+                        "#456fae", "#dc2626", "#f59e0b", "#16a34a",
+                        "#9333ea", "#0891b2", "#64748b", "#ea580c",
+                    ],
+                }]
+            },
+            options: { responsive: true }
+        });
+    } else if (ctxCat) {
+        ctxCat.parentElement.innerHTML += '<p class="text-sm text-slate-500 text-center py-8">Aucune depense pour cette periode.</p>';
+    }
+})();
+</script>
+{% endblock %}

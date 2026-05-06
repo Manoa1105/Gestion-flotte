@@ -1,0 +1,90 @@
+{% comment %}
+Page de profil personnel : informations du compte + changement de mot de passe.
+{% endcomment %}
+{% extends "base.html" %}
+
+{% block contenu %}
+<div class="max-w-2xl mx-auto">
+
+    <h1 class="text-2xl font-bold text-slate-900 mb-6">Mon profil</h1>
+
+    {% comment %} Messages flash {% endcomment %}
+    {% for message in messages %}
+        <div class="mb-4 p-3 rounded-lg text-sm
+            {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
+            {% else %}bg-red-50 border border-red-200 text-red-700{% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% comment %} Informations du compte {% endcomment %}
+    <div class="carte mb-6">
+        <h2 class="text-base font-semibold text-slate-900 mb-4">Informations du compte</h2>
+
+        <dl class="space-y-3">
+            <div class="flex justify-between">
+                <dt class="text-sm text-slate-500">Nom d'utilisateur</dt>
+                <dd class="text-sm font-medium text-slate-900">{{ request.user.username }}</dd>
+            </div>
+            {% if request.user.get_full_name %}
+            <div class="flex justify-between">
+                <dt class="text-sm text-slate-500">Nom complet</dt>
+                <dd class="text-sm font-medium text-slate-900">{{ request.user.get_full_name }}</dd>
+            </div>
+            {% endif %}
+            {% if request.user.email %}
+            <div class="flex justify-between">
+                <dt class="text-sm text-slate-500">Email</dt>
+                <dd class="text-sm font-medium text-slate-900">{{ request.user.email }}</dd>
+            </div>
+            {% endif %}
+            {% if not request.user.is_superuser %}
+            <div class="flex justify-between">
+                <dt class="text-sm text-slate-500">Rôle</dt>
+                <dd>
+                    {% if profil_role == "GESTIONNAIRE" %}
+                        <span class="badge-bleu">Gestionnaire</span>
+                    {% elif profil_role == "COMPTABLE" %}
+                        <span class="badge-orange">Comptable</span>
+                    {% elif profil_role == "CHAUFFEUR" %}
+                        <span class="badge-vert">Chauffeur</span>
+                    {% endif %}
+                </dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+
+    {% comment %} Formulaire de changement de mot de passe {% endcomment %}
+    <div class="carte">
+        <h2 class="text-base font-semibold text-slate-900 mb-4">Changer le mot de passe</h2>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form_mdp.non_field_errors %}
+                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    {% for erreur in form_mdp.non_field_errors %}
+                        <p class="text-sm text-red-700">{{ erreur }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for champ in form_mdp %}
+            <div class="mb-4">
+                <label class="form-label" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                {{ champ }}
+                {% if champ.errors %}
+                    <p class="form-help text-red-600 mt-1">{{ champ.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-primaire">
+                Changer le mot de passe
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

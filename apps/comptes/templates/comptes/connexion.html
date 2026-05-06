@@ -1,0 +1,81 @@
+{% comment %}
+Page de connexion — centrée, sans navigation (l'utilisateur n'est pas encore connecté).
+{% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — Gestion de Flotte</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dist/output.css' %}">
+</head>
+<body class="min-h-screen bg-slate-100 font-sans antialiased flex items-center justify-center">
+
+<div class="w-full max-w-md px-4">
+
+    {% comment %} Logo et titre {% endcomment %}
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 bg-primaire-600 rounded-2xl mb-4">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1"/>
+            </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">Gestion de Flotte</h1>
+        <p class="text-slate-500 text-sm mt-1">Madagascar</p>
+    </div>
+
+    {% comment %} Carte de connexion {% endcomment %}
+    <div class="bg-white rounded-2xl shadow-md p-8">
+        <h2 class="text-lg font-semibold text-slate-900 mb-6">Connexion</h2>
+
+        {% comment %} Messages d'erreur généraux du formulaire {% endcomment %}
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                {% for erreur in form.non_field_errors %}
+                    <p class="text-sm text-red-700">{{ erreur }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% comment %} Champ username {% endcomment %}
+            <div class="mb-4">
+                <label class="form-label" for="{{ form.username.id_for_label }}">
+                    {{ form.username.label }}
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <p class="form-help text-red-600 mt-1">{{ form.username.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            {% comment %} Champ mot de passe {% endcomment %}
+            <div class="mb-6">
+                <label class="form-label" for="{{ form.password.id_for_label }}">
+                    {{ form.password.label }}
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <p class="form-help text-red-600 mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-primaire w-full justify-center">
+                Se connecter
+            </button>
+        </form>
+    </div>
+
+    <p class="text-center text-xs text-slate-400 mt-6">&copy; 2026 Gestion de Flotte Madagascar</p>
+</div>
+
+</body>
+</html>

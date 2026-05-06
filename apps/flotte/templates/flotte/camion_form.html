@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% comment %} =============================================================================
+   camion_form.html - Formulaire création/édition d'un camion
+   =============================================================================
+   Le même template sert pour créer ou modifier : la variable "mode" différencie.
+   Le formulaire est généré par CamionForm (forms.py).
+   ============================================================================= {% endcomment %}
+
+{% block contenu %}
+
+    {% comment %} ----- Fil d'Ariane + titre ----- {% endcomment %}
+    <div class="mb-6">
+        <nav class="text-sm text-slate-500 mb-2">
+            <a href="{% url 'flotte:camion_liste' %}" class="hover:text-primaire-700">Camions</a>
+            <span class="mx-2">/</span>
+            {% if mode == "modification" %}
+                <a href="{% url 'flotte:camion_detail' pk=camion.pk %}" class="hover:text-primaire-700">{{ camion.immatriculation }}</a>
+                <span class="mx-2">/</span>
+                <span class="text-slate-700">Modifier</span>
+            {% else %}
+                <span class="text-slate-700">Nouveau camion</span>
+            {% endif %}
+        </nav>
+        <h1 class="text-2xl font-bold text-slate-900">
+            {% if mode == "modification" %}Modifier {{ camion.immatriculation }}{% else %}Nouveau camion{% endif %}
+        </h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="carte">
+        {% comment %} CSRF token : protection contre les attaques Cross-Site Request Forgery.
+           Django REQUIERT ce token sur tous les formulaires POST. {% endcomment %}
+        {% csrf_token %}
+
+        {% comment %} Si le formulaire a des erreurs globales (non liées à un champ précis) {% endcomment %}
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-3 rounded-md bg-red-50 text-red-800 border border-red-200">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% comment %} ----- Champs du formulaire, regroupés par section ----- {% endcomment %}
+        <div class="space-y-6">
+
+            {% comment %} Identification {% endcomment %}
+            <div>
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Identification</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% comment %} Pour la clarté pédagogique, on écrit chaque champ explicitement
+                       avec son label, son input et ses erreurs.
+                       En production on factoriserait avec un partial dédié. {% endcomment %}
+                    <div>
+                        <label class="form-label" for="{{ form.immatriculation.id_for_label }}">{{ form.immatriculation.label }}</label>
+                        {{ form.immatriculation }}
+                        {% if form.immatriculation.errors %}<p class="form-error">{{ form.immatriculation.errors|join:" " }}</p>{% endif %}
+                        {% if form.immatriculation.help_text %}<p class="form-help">{{ form.immatriculation.help_text }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.statut.id_for_label }}">{{ form.statut.label }}</label>
+                        {{ form.statut }}
+                        {% if form.statut.errors %}<p class="form-error">{{ form.statut.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.marque.id_for_label }}">{{ form.marque.label }}</label>
+                        {{ form.marque }}
+                        {% if form.marque.errors %}<p class="form-error">{{ form.marque.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.modele.id_for_label }}">{{ form.modele.label }}</label>
+                        {{ form.modele }}
+                        {% if form.modele.errors %}<p class="form-error">{{ form.modele.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.annee_fabrication.id_for_label }}">{{ form.annee_fabrication.label }}</label>
+                        {{ form.annee_fabrication }}
+                        {% if form.annee_fabrication.errors %}<p class="form-error">{{ form.annee_fabrication.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+                        {{ form.photo }}
+                        {% if form.photo.errors %}<p class="form-error">{{ form.photo.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% comment %} Caractéristiques techniques {% endcomment %}
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Caractéristiques techniques</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.capacite_charge_tonnes.id_for_label }}">{{ form.capacite_charge_tonnes.label }}</label>
+                        {{ form.capacite_charge_tonnes }}
+                        {% if form.capacite_charge_tonnes.errors %}<p class="form-error">{{ form.capacite_charge_tonnes.errors|join:" " }}</p>{% endif %}
+                        {% if form.capacite_charge_tonnes.help_text %}<p class="form-help">{{ form.capacite_charge_tonnes.help_text }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.consommation_litres_100km.id_for_label }}">{{ form.consommation_litres_100km.label }}</label>
+                        {{ form.consommation_litres_100km }}
+                        {% if form.consommation_litres_100km.errors %}<p class="form-error">{{ form.consommation_litres_100km.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% comment %} Acquisition {% endcomment %}
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Acquisition</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.date_acquisition.id_for_label }}">{{ form.date_acquisition.label }}</label>
+                        {{ form.date_acquisition }}
+                        {% if form.date_acquisition.errors %}<p class="form-error">{{ form.date_acquisition.errors|join:" " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.prix_acquisition_mga.id_for_label }}">{{ form.prix_acquisition_mga.label }}</label>
+                        {{ form.prix_acquisition_mga }}
+                        {% if form.prix_acquisition_mga.errors %}<p class="form-error">{{ form.prix_acquisition_mga.errors|join:" " }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% comment %} Notes {% endcomment %}
+            <div class="border-t border-slate-200 pt-6">
+                <label class="form-label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}<p class="form-error">{{ form.notes.errors|join:" " }}</p>{% endif %}
+            </div>
+        </div>
+
+        {% comment %} ----- Boutons d'action ----- {% endcomment %}
+        <div class="mt-6 pt-6 border-t border-slate-200 flex items-center justify-end space-x-3">
+            <a href="{% if mode == 'modification' %}{% url 'flotte:camion_detail' pk=camion.pk %}{% else %}{% url 'flotte:camion_liste' %}{% endif %}"
+               class="btn-secondaire">
+                Annuler
+            </a>
+            <button type="submit" class="btn-primaire">
+                {% if mode == "modification" %}Enregistrer les modifications{% else %}Créer le camion{% endif %}
+            </button>
+        </div>
+    </form>
+
+{% endblock %}

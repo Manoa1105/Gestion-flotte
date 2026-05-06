@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% comment %} =============================================================================
+   camion_liste.html - Liste des camions avec recherche et filtres HTMX
+   =============================================================================
+   Utilise HTMX :
+     - hx-get="..."        : URL appelée
+     - hx-trigger="..."    : événement déclencheur (saisie, clic, etc.)
+     - hx-target="..."     : élément du DOM à remplacer par la réponse
+     - hx-push-url="true"  : met à jour l'URL dans la barre du navigateur
+   ============================================================================= {% endcomment %}
+
+{% block contenu %}
+
+    {% comment %} ----- En-tête de la page ----- {% endcomment %}
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Camions</h1>
+            <p class="mt-1 text-sm text-slate-600">
+                {{ total_camions }} camion{{ total_camions|pluralize }} dans la flotte.
+            </p>
+        </div>
+        <a href="{% url 'flotte:camion_creer' %}" class="btn-primaire">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 4v16m8-8H4"/>
+            </svg>
+            Nouveau camion
+        </a>
+    </div>
+
+    {% comment %} ----- Affichage des messages flash (succès, erreurs) ----- {% endcomment %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-3 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% comment %} ----- Carte de filtres ----- {% endcomment %}
+    <div class="carte mb-4">
+
+        {% comment %} Champ de recherche : HTMX déclenche une requête à chaque frappe (avec debounce) {% endcomment %}
+        <div class="mb-4">
+            <label class="form-label" for="recherche">Rechercher</label>
+            <input type="search"
+                   id="recherche"
+                   name="recherche"
+                   value="{{ recherche }}"
+                   placeholder="Immatriculation, marque ou modèle..."
+                   class="form-input"
+                   hx-get="{% url 'flotte:camion_liste' %}"
+                   hx-trigger="input changed delay:300ms, keyup[key=='Enter']"
+                   hx-target="#liste-camions"
+                   hx-include="[name='statut']"
+                   hx-push-url="true">
+            <p class="form-help">La liste se met à jour automatiquement pendant la saisie.</p>
+        </div>
+
+        {% comment %} Chips de filtre par statut {% endcomment %}
+        <div>
+            <label class="form-label">Filtrer par statut</label>
+            <div class="flex flex-wrap gap-2">
+                {% comment %} Lien "Tous" : valeur statut vide {% endcomment %}
+                <a href="?recherche={{ recherche }}"
+                   hx-get="{% url 'flotte:camion_liste' %}?recherche={{ recherche }}"
+                   hx-target="#liste-camions"
+                   hx-push-url="true"
+                   class="{% if not statut_actif %}chip-active{% else %}chip-inactive{% endif %}">
+                    Tous
+                </a>
+                {% comment %} Une chip par statut possible {% endcomment %}
+                {% for valeur, libelle in statuts %}
+                    <a href="?recherche={{ recherche }}&statut={{ valeur }}"
+                       hx-get="{% url 'flotte:camion_liste' %}?recherche={{ recherche }}&statut={{ valeur }}"
+                       hx-target="#liste-camions"
+                       hx-push-url="true"
+                       class="{% if statut_actif == valeur %}chip-active{% else %}chip-inactive{% endif %}">
+                        {{ libelle }}
+                    </a>
+                {% endfor %}
+            </div>
+            {% comment %} Champ caché pour que le filtre statut soit envoyé avec la recherche HTMX {% endcomment %}
+            <input type="hidden" name="statut" value="{{ statut_actif }}">
+        </div>
+    </div>
+
+    {% comment %} ----- Zone des résultats (cible des swaps HTMX) ----- {% endcomment %}
+    <div id="liste-camions">
+        {% include "flotte/_camion_liste_resultats.html" %}
+    </div>
+
+{% endblock %}

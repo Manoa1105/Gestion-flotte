@@ -1,0 +1,83 @@
+{% if chauffeurs %}
+    <div class="carte overflow-hidden p-0">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Permis</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Expérience</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Téléphone</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Statut</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-slate-200">
+                    {% for c in chauffeurs %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3 text-sm font-medium text-slate-900">
+                                <a href="{% url 'flotte:chauffeur_detail' pk=c.pk %}" class="hover:text-primaire-700">
+                                    {{ c.nom_complet }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ c.get_type_permis_display }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ c.annees_experience }} an{{ c.annees_experience|pluralize }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ c.telephone|default:"—" }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                {% if c.statut == 'disponible' %}
+                                    <span class="badge-vert">Disponible</span>
+                                {% elif c.statut == 'en_mission' %}
+                                    <span class="badge-bleu">En mission</span>
+                                {% elif c.statut == 'repos' %}
+                                    <span class="badge-orange">En repos</span>
+                                {% elif c.statut == 'conge' %}
+                                    <span class="badge-orange">En congé</span>
+                                {% elif c.statut == 'inactif' %}
+                                    <span class="badge-gris">Inactif</span>
+                                {% else %}
+                                    <span class="badge-gris">{{ c.get_statut_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-right">
+                                <a href="{% url 'flotte:chauffeur_detail' pk=c.pk %}" class="text-primaire-600 hover:text-primaire-800 mr-3">Détails</a>
+                                <a href="{% url 'flotte:chauffeur_modifier' pk=c.pk %}" class="text-slate-600 hover:text-slate-800">Modifier</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page.paginator.num_pages > 1 %}
+            <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <p class="text-sm text-slate-600">
+                    Page {{ page.number }} sur {{ page.paginator.num_pages }} ({{ page.paginator.count }} chauffeurs)
+                </p>
+                <div class="flex space-x-2">
+                    {% if page.has_previous %}
+                        <a href="?recherche={{ recherche }}&statut={{ statut_actif }}&page={{ page.previous_page_number }}" class="btn-secondaire text-xs">Précédent</a>
+                    {% endif %}
+                    {% if page.has_next %}
+                        <a href="?recherche={{ recherche }}&statut={{ statut_actif }}&page={{ page.next_page_number }}" class="btn-secondaire text-xs">Suivant</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="carte text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        {% if recherche or statut_actif %}
+            <h3 class="mt-3 text-sm font-medium text-slate-900">Aucun chauffeur ne correspond à ces critères</h3>
+            <p class="mt-1 text-sm text-slate-500">Essaie d'élargir la recherche ou retire les filtres.</p>
+        {% else %}
+            <h3 class="mt-3 text-sm font-medium text-slate-900">Aucun chauffeur enregistré</h3>
+            <p class="mt-1 text-sm text-slate-500">Commence par ajouter ton premier chauffeur.</p>
+            <div class="mt-4">
+                <a href="{% url 'flotte:chauffeur_creer' %}" class="btn-primaire">Ajouter un chauffeur</a>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

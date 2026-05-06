@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+
+    <div class="max-w-2xl mx-auto">
+        <nav class="text-sm text-slate-500 mb-2">
+            <a href="{% url 'missions:mission_liste' %}" class="hover:text-primaire-700">Missions</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'missions:mission_detail' pk=mission.pk %}" class="hover:text-primaire-700">{{ mission.reference }}</a>
+            <span class="mx-2">/</span>
+            <span class="text-slate-700">Supprimer</span>
+        </nav>
+
+        <div class="carte border-red-200">
+            <div class="flex items-start mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h1 class="text-lg font-semibold text-slate-900">Confirmer la suppression</h1>
+                    <p class="mt-1 text-sm text-slate-600">
+                        Tu es sur le point de supprimer definitivement la mission
+                        <span class="font-medium text-slate-900">{{ mission.reference }}</span>
+                        ({{ mission.ville_depart.nom }} → {{ mission.ville_arrivee.nom }}).
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700">
+                Cette action est irreversible. Les eventuelles positions GPS et evenements
+                lies seront aussi supprimes.
+            </div>
+
+            <form method="post" class="mt-6 flex items-center justify-end space-x-3">
+                {% csrf_token %}
+                <a href="{% url 'missions:mission_detail' pk=mission.pk %}" class="btn-secondaire">Annuler</a>
+                <button type="submit" class="btn-danger">Supprimer definitivement</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

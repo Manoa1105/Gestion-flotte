@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+
+    <div class="mb-6">
+        <nav class="text-sm text-slate-500 mb-2">
+            <a href="{% url 'finances:dashboard' %}" class="hover:text-primaire-700">Finances</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'finances:depense_liste' %}" class="hover:text-primaire-700">Depenses</a>
+            <span class="mx-2">/</span>
+            <span class="text-slate-700">{% if mode == "modification" %}Modifier{% else %}Nouvelle{% endif %}</span>
+        </nav>
+        <h1 class="text-2xl font-bold text-slate-900">
+            {% if mode == "modification" %}Modifier la depense{% else %}Nouvelle depense{% endif %}
+        </h1>
+    </div>
+
+    <form method="post" class="carte">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-3 rounded-md bg-red-50 text-red-800 border border-red-200">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label" for="{{ form.type_depense.id_for_label }}">{{ form.type_depense.label }}</label>
+                    {{ form.type_depense }}
+                    {% if form.type_depense.errors %}<p class="form-error">{{ form.type_depense.errors|join:" " }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.montant_mga.id_for_label }}">{{ form.montant_mga.label }}</label>
+                    {{ form.montant_mga }}
+                    {% if form.montant_mga.errors %}<p class="form-error">{{ form.montant_mga.errors|join:" " }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+                    {{ form.date }}
+                    {% if form.date.errors %}<p class="form-error">{{ form.date.errors|join:" " }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<p class="form-error">{{ form.description.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h2 class="text-base font-semibold text-slate-900 mb-3">Liens optionnels</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label" for="{{ form.mission.id_for_label }}">{{ form.mission.label }}</label>
+                        {{ form.mission }}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.camion.id_for_label }}">{{ form.camion.label }}</label>
+                        {{ form.camion }}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.chauffeur.id_for_label }}">{{ form.chauffeur.label }}</label>
+                        {{ form.chauffeur }}
+                    </div>
+                </div>
+                <p class="form-help mt-3">Lier la depense a une mission, un camion ou un chauffeur permet d'agreger correctement les rapports de rentabilite.</p>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-slate-200 flex items-center justify-end space-x-3">
+            <a href="{% url 'finances:depense_liste' %}" class="btn-secondaire">Annuler</a>
+            <button type="submit" class="btn-primaire">
+                {% if mode == "modification" %}Enregistrer{% else %}Creer la depense{% endif %}
+            </button>
+        </div>
+    </form>
+
+{% endblock %}
